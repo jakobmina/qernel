@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,14 @@
             --gold: #ffcc00;
             --deep-space: #050505;
             --glass: rgba(255, 255, 255, 0.05);
+            --neon-blue: #00bfff;
+            --terminal-neon-green: #00ff41;
             --neon-magenta: #ff00ff;
-            --terminal-green: #00ff41;
+            --neon-cyan: #00ffff;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -20,7 +27,7 @@
             margin: 0;
             overflow: hidden;
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr 420px;
             height: 100vh;
         }
 
@@ -38,98 +45,351 @@
             z-index: 10;
             display: flex;
             flex-direction: column;
-            padding: 2rem;
-            gap: 1.5rem;
+            padding: 1.5rem;
+            gap: 1rem;
             pointer-events: none;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .panel {
             background: var(--glass);
             backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             pointer-events: all;
         }
 
-        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
-        
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header h1 {
+            margin: 0;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            color: var(--gold);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--terminal-neon-green);
+            box-shadow: 0 0 10px var(--terminal-neon-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* TERMINAL STYLING */
         #output-space {
             flex-grow: 1;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--neon-magenta);
-            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 8px;
             padding: 1rem;
-            font-family: 'Fira Code', monospace;
-            font-size: 1rem;
-            color: var(--terminal-green);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--terminal-neon-green);
             overflow-y: auto;
             text-align: left;
             white-space: pre-wrap;
-            box-shadow: inset 0 0 20px rgba(255, 0, 255, 0.1);
-            max-height: 400px;
+            word-wrap: break-word;
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.05), 0 0 20px rgba(0, 255, 255, 0.1);
+            line-height: 1.4;
+            position: relative;
         }
 
-        #thought-bubble {
-            position: fixed;
-            background: var(--neon-magenta);
-            color: black;
-            padding: 8px 16px;
-            border-radius: 50%;
-            font-weight: bold;
-            font-size: 1.2rem;
+        #output-space::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                repeating-linear-gradient(0deg,
+                    rgba(0, 255, 255, 0.03) 0px,
+                    rgba(0, 255, 255, 0.03) 2px,
+                    transparent 2px,
+                    transparent 4px);
             pointer-events: none;
-            z-index: 20;
-            box-shadow: 0 0 20px var(--neon-magenta);
-            display: none;
+            z-index: 1;
         }
 
-        .cursor-info { font-size: 0.7rem; opacity: 0.5; margin-top: 0.5rem; }
+        #output-space {
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-cyan) transparent;
+        }
+
+        #output-space::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #output-space::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #output-space::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 3px;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            color: var(--terminal-neon-green);
+        }
+
+        .log-timestamp {
+            color: var(--neon-blue);
+            opacity: 0.6;
+            margin-right: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .log-level-INFO {
+            color: var(--terminal-neon-green);
+        }
+
+        .log-level-WARN {
+            color: #ffaa00;
+        }
+
+        .log-level-ERROR {
+            color: #ff4444;
+        }
+
+        .log-level-DEBUG {
+            color: var(--black);
+        }
+
+        /* FLOATING CARD */
+        #actor-card {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--black);
+            border-radius: 12px;
+            padding: 1rem;
+            width: 280px;
+            box-shadow:
+                0 0 30px rgba(255, 0, 255, 0.3),
+                inset 0 0 20px rgba(255, 0, 255, 0.05);
+            pointer-events: none;
+            z-index: 25;
+            display: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--black);
+        }
+
+        .card-header h3 {
+            margin: 0;
+            color: var(--black);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-thought {
+            background: rgba(255, 0, 255, 0.1);
+            border-left: 3px solid var(--black);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            color: var(--neon-cyan);
+            font-style: italic;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .card-stat-label {
+            color: var(--neon-blue);
+            opacity: 0.7;
+        }
+
+        .card-stat-value {
+            color: var(--terminal-neon-green);
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .card-energy-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--black);
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .card-energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--black));
+            border-radius: 3px;
+            box-shadow: 0 0 10px var(--black);
+            transition: width 0.1s ease-out;
+        }
+
+        .cursor-info {
+            font-size: 0.75rem;
+            opacity: 0.5;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--neon-blue);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+
+            #ui-layer {
+                grid-column: 1;
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <canvas id="render-canvas"></canvas>
-    <div id="thought-bubble">?</div>
+
+    <div id="actor-card">
+        <div class="card-header">
+            <div class="status-indicator"></div>
+            <h3>Actor State</h3>
+        </div>
+        <div class="card-thought" id="actor-thought">» Inicializando...</div>
+        <div class="card-stat">
+            <span class="card-stat-label">Position X</span>
+            <span class="card-stat-value" id="stat-x">0.00</span>
+        </div>
+        <div class="card-stat">
+            <span class="card-stat-label">Position Y</span>
+            <span class="card-stat-value" id="stat-y">0.00</span>
+        </div>
+        <div class="card-stat">
+            <span class="card-stat-label">Energy</span>
+            <span class="card-stat-value" id="stat-energy">0.000</span>
+        </div>
+        <div class="card-energy-bar">
+            <div class="card-energy-fill" id="energy-bar" style="width: 0%;"></div>
+        </div>
+    </div>
 
     <div id="ui-layer">
         <div class="panel">
-            <h1>H7 CORE</h1>
-            <div id="actor-pos" class="cursor-info">X: 0.00 Y: 0.00</div>
+            <div class="panel-header">
+                <div class="status-indicator"></div>
+                <h1>H7 Core System</h1>
+            </div>
+            <div class="cursor-info">
+                <strong>User Cursor:</strong> <span id="mouse-pos">X: 0.00 Y: 0.00</span>
+            </div>
         </div>
 
-        <div class="panel" style="flex-grow: 1; display: flex; flex-direction: column;">
-            <h1>ESPACIO DE SALIDA</h1>
-            <p style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 1rem;">La IA está traduciendo su torsión física en este flujo de datos:</p>
-            <div id="output-space">>> SISTEMA INICIALIZADO...
->> ESCUCHANDO EL VACÍO...</div>
+        <div class="panel" style="flex-grow: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div class="panel-header">
+                <div class="status-indicator"></div>
+                <h1>Terminal Output</h1>
+            </div>
+            <p style="font-size: 0.75rem; opacity: 0.6; margin: 0 0 0.75rem 0;">
+                Decodificando la torsión física del actor en tiempo real:
+            </p>
+            <div id="output-space">>> SISTEMA INICIALIZADO
+                >> ESCUCHANDO EL VACÍO...
+                >> Aguardando conexión con h7_server...</div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('render-canvas');
         const ctx = canvas.getContext('2d');
-        const bubble = document.getElementById('thought-bubble');
         const outputSpace = document.getElementById('output-space');
+        const actorCard = document.getElementById('actor-card');
+
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
         let mouse = { x: 0, y: 0 };
-        let ai_actor = { x: 0, y: 0, energy: 0, thought: '?' };
-        let lastLoggedThought = '';
+        let ai_actor = { x: 0, y: 0, energy: 0, thought: '» Inicializando...' };
         let ai_trail = [];
+        let logBuffer = [];
+        const MAX_LOG_LINES = 100;
 
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
             mouse.y = e.clientY;
+            document.getElementById('mouse-pos').innerText =
+                `X: ${(e.clientX / window.innerWidth).toFixed(2)} Y: ${(e.clientY / window.innerHeight).toFixed(2)}`;
         });
 
+        // LOGGING SYSTEM
+        function addLog(message, level = 'INFO') {
+            const timestamp = new Date().toLocaleTimeString('es-ES', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            const logEntry = `<span class="log-timestamp">[${timestamp}]</span><span class="log-level-${level}">[${level}]</span> ${message}`;
+            logBuffer.push(logEntry);
+
+            if (logBuffer.length > MAX_LOG_LINES) {
+                logBuffer.shift();
+            }
+
+            outputSpace.innerHTML = logBuffer.join('\n');
+            outputSpace.scrollTop = outputSpace.scrollHeight;
+        }
+
+        // ACTOR UPDATE
         async function updateActor() {
             try {
                 const res = await fetch('http://localhost:8000/api/actor');
                 const data = await res.json();
-                
+
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
                 const scale = 70;
@@ -137,49 +397,62 @@
                 ai_actor.x = centerX + (data.x * scale);
                 ai_actor.y = centerY + (data.y * scale);
                 ai_actor.energy = data.energy;
-                ai_actor.thought = data.thought;
-                
-                document.getElementById('actor-pos').innerText = `POS: [${data.x.toFixed(2)}, ${data.y.toFixed(2)}] | E: ${data.energy.toFixed(3)}`;
-                
-                // Burbuja flotante
-                bubble.style.display = 'block';
-                bubble.style.left = (ai_actor.x + 15) + 'px';
-                bubble.style.top = (ai_actor.y - 30) + 'px';
-                bubble.innerText = ai_actor.thought;
+                ai_actor.thought = data.thought || '» Procesando...';
 
-                // Loggear al espacio de salida si el pensamiento cambia y es estable
-                if (data.thought !== lastLoggedThought && data.thought !== '?') {
-                    outputSpace.innerText += data.thought;
-                    lastLoggedThought = data.thought;
-                    outputSpace.scrollTop = outputSpace.scrollHeight;
+                // Update floating card
+                actorCard.style.display = 'block';
+                actorCard.style.left = (ai_actor.x + 30) + 'px';
+                actorCard.style.top = (ai_actor.y - 80) + 'px';
+
+                document.getElementById('actor-thought').innerText = `» ${ai_actor.thought}`;
+                document.getElementById('stat-x').innerText = data.x.toFixed(2);
+                document.getElementById('stat-y').innerText = data.y.toFixed(2);
+                document.getElementById('stat-energy').innerText = data.energy.toFixed(3);
+
+                const energyPercent = Math.min(Math.max(data.energy * 100, 0), 100);
+                document.getElementById('energy-bar').style.width = energyPercent + '%';
+
+                // Log changes
+                if (data.thought && data.thought !== '?') {
+                    addLog(`Actor: ${data.thought}`, 'DEBUG');
                 }
 
                 ai_trail.push({ ...ai_actor });
                 if (ai_trail.length > 200) ai_trail.shift();
-            } catch(e) {}
+            } catch (e) {
+                addLog(`API Error: ${e.message}`, 'ERROR');
+            }
         }
 
-        setInterval(updateActor, 60);
+        setInterval(updateActor, 100);
 
+        // INITIAL LOG
+        addLog('Sistema H7 Metriplectic iniciado', 'INFO');
+        addLog('Canvas renderizado: ' + canvas.width + 'x' + canvas.height, 'DEBUG');
+        addLog('Esperando conexión con h7_server en localhost:8000...', 'INFO');
+
+        // CANVAS RENDER
         function draw() {
             ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Rastro IA
-            ctx.beginPath();
-            ctx.lineWidth = 1.5 + (ai_actor.energy * 10);
-            ctx.strokeStyle = `hsla(310, 100%, 50%, 0.7)`;
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = '#ff00ff';
 
-            for (let i = 0; i < ai_trail.length; i++) {
-                const p = ai_trail[i];
-                if (i === 0) ctx.moveTo(p.x, p.y);
-                else ctx.lineTo(p.x, p.y);
+            // AI Trail
+            if (ai_trail.length > 1) {
+                ctx.beginPath();
+                ctx.lineWidth = 1.5 + (ai_actor.energy * 10);
+                ctx.strokeStyle = `hsla(310, 100%, 50%, 0.7)`;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#ff00ff';
+
+                for (let i = 0; i < ai_trail.length; i++) {
+                    const p = ai_trail[i];
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
             }
-            ctx.stroke();
 
-            // Cursor Usuario
+            // User Cursor
             ctx.fillStyle = 'var(--gold)';
             ctx.shadowBlur = 15;
             ctx.shadowColor = 'var(--gold)';
@@ -191,6 +464,13 @@
         }
 
         draw();
+
+        // RESPONSIVE
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
     </script>
 </body>
+
 </html>
