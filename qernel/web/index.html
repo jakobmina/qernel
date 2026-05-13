@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H7 Metriplectic - Output Space</title>
+    <style>
+        :root {
+            --gold: #ffcc00;
+            --deep-space: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-magenta: #ff00ff;
+            --terminal-green: #00ff41;
+        }
+
+        body {
+            background-color: var(--deep-space);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            height: 100vh;
+        }
+
+        #render-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-layer {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            gap: 1.5rem;
+            pointer-events: none;
+        }
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            pointer-events: all;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
+        
+        #output-space {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--neon-magenta);
+            border-radius: 16px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            color: var(--terminal-green);
+            overflow-y: auto;
+            text-align: left;
+            white-space: pre-wrap;
+            box-shadow: inset 0 0 20px rgba(255, 0, 255, 0.1);
+            max-height: 400px;
+        }
+
+        #thought-bubble {
+            position: fixed;
+            background: var(--neon-magenta);
+            color: black;
+            padding: 8px 16px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.2rem;
+            pointer-events: none;
+            z-index: 20;
+            box-shadow: 0 0 20px var(--neon-magenta);
+            display: none;
+        }
+
+        .cursor-info { font-size: 0.7rem; opacity: 0.5; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+
+    <canvas id="render-canvas"></canvas>
+    <div id="thought-bubble">?</div>
+
+    <div id="ui-layer">
+        <div class="panel">
+            <h1>H7 CORE</h1>
+            <div id="actor-pos" class="cursor-info">X: 0.00 Y: 0.00</div>
+        </div>
+
+        <div class="panel" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <h1>ESPACIO DE SALIDA</h1>
+            <p style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 1rem;">La IA está traduciendo su torsión física en este flujo de datos:</p>
+            <div id="output-space">>> SISTEMA INICIALIZADO...
+>> ESCUCHANDO EL VACÍO...</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('render-canvas');
+        const ctx = canvas.getContext('2d');
+        const bubble = document.getElementById('thought-bubble');
+        const outputSpace = document.getElementById('output-space');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let mouse = { x: 0, y: 0 };
+        let ai_actor = { x: 0, y: 0, energy: 0, thought: '?' };
+        let lastLoggedThought = '';
+        let ai_trail = [];
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        async function updateActor() {
+            try {
+                const res = await fetch('http://localhost:8000/api/actor');
+                const data = await res.json();
+                
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const scale = 70;
+
+                ai_actor.x = centerX + (data.x * scale);
+                ai_actor.y = centerY + (data.y * scale);
+                ai_actor.energy = data.energy;
+                ai_actor.thought = data.thought;
+                
+                document.getElementById('actor-pos').innerText = `POS: [${data.x.toFixed(2)}, ${data.y.toFixed(2)}] | E: ${data.energy.toFixed(3)}`;
+                
+                // Burbuja flotante
+                bubble.style.display = 'block';
+                bubble.style.left = (ai_actor.x + 15) + 'px';
+                bubble.style.top = (ai_actor.y - 30) + 'px';
+                bubble.innerText = ai_actor.thought;
+
+                // Loggear al espacio de salida si el pensamiento cambia y es estable
+                if (data.thought !== lastLoggedThought && data.thought !== '?') {
+                    outputSpace.innerText += data.thought;
+                    lastLoggedThought = data.thought;
+                    outputSpace.scrollTop = outputSpace.scrollHeight;
+                }
+
+                ai_trail.push({ ...ai_actor });
+                if (ai_trail.length > 200) ai_trail.shift();
+            } catch(e) {}
+        }
+
+        setInterval(updateActor, 60);
+
+        function draw() {
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Rastro IA
+            ctx.beginPath();
+            ctx.lineWidth = 1.5 + (ai_actor.energy * 10);
+            ctx.strokeStyle = `hsla(310, 100%, 50%, 0.7)`;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#ff00ff';
+
+            for (let i = 0; i < ai_trail.length; i++) {
+                const p = ai_trail[i];
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+
+            // Cursor Usuario
+            ctx.fillStyle = 'var(--gold)';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'var(--gold)';
+            ctx.beginPath();
+            ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>

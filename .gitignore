@@ -1,0 +1,33 @@
+# --- Binarios y Objetos C ---
+*.o
+qernel/src/*.o
+qernel/bin/
+qernel/qernel_sim
+qernel/qnn_torsion
+qernel/pauli_daemon
+qernel/h7_server
+qernel/torsion_codec
+qernel/qnn_grid
+qernel/screen_sensor
+qernel/qnn_actor
+qernel/boot
+
+# --- Entorno Python y Pruebas ---
+.env/
+qernel/.env/
+__pycache__/
+qernel/tests/__pycache__/
+.pytest_cache/
+qernel/.pytest_cache/
+
+# --- Sockets y Archivos Temporales ---
+*.socket
+/tmp/qnn_pauli.socket
+
+# --- Logs y Telemetría ---
+*.log
+*.csv
+
+# --- Otros ---
+.DS_Store
+.vscode/

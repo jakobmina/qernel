@@ -1,0 +1,19 @@
+[Unit]
+Description=H7 Metriplectic Qernel Boot Service
+After=network.target
+
+[Service]
+Type=simple
+User=jako
+WorkingDirectory=/home/jako/practicas-c/qernel
+ExecStart=/home/jako/practicas-c/qernel/boot
+Restart=always
+RestartSec=5
+
+# Regla 1.3: El sistema no debe morir térmicamente
+# Limitamos los recursos pero aseguramos persistencia
+CPUWeight=100
+MemoryHigh=512M
+
+[Install]
+WantedBy=multi-user.target
