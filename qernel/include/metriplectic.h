@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 /**
- * EL MANDATO METRIPLÉTICO - Unified Autonomous Edition
+ *  METRIPLÉX QNN- Unified Autonomous Edition
  */
 
 #ifndef M_PI
