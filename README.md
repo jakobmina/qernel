@@ -1,9 +1,9 @@
-<img width="160" height="160" alt="image" src="https://github.com/jakobmina/qernel/blob/main/qernel_logo_cutout.png"/> <div text aling="center" width="160" height="160"> 
+<img style="float: right; margin-left: 100px;" width="160" height="160" alt="image" src="https://github.com/jakobmina/qernel/blob/main/qernel_logo_cutout.png"/> <div text-aling="center" width="160" height="160"> 
 # <h> qernel: Metric-Plectic Quantum Neural Network Backend </h>
 
 <p align="center">
-  <img src="assets/badges/" height="
-    
+  <img src="https://github.com/jakobmina/qernel/blob/main/badge_row.png" height=29">
+</p>
 `qernel` is a high-performance, low-level computational framework written in C/Python designed to simulate quantum space-time dynamics, hadronic state evolutions (nucleons), and topological neural networks without standard ghost states or artificial constraints.
 
 ## 1. Core Physics & Paradigm Shift
