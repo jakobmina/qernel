@@ -1,10 +1,13 @@
+#include <stdbool.h>
 #include "qcore_metriplectic.h"
 #include "vga_driver.h"
 #include "i2c_lcd.h"
+#include "node_router.h"
 
 // Global state for predictability in the freestanding environment
 SystemState state;
 LcdI2c lcd;
+NodeRouter router;
 
 // Custom itoa for freestanding environment
 void itoa(int n, char s[]) {
@@ -59,6 +62,35 @@ void kernel_main(uint32_t magic, void* mbi) {
     int step = 0;
     while (1) {
         solve_step(&state, 0.05f);
+
+        // Node Router: route this tick's toroidal field intensities to the
+        // 4 virtual cores by key range, then sort each core's bucket.
+        // Single-threaded for now (see node_router.h for the scaling plan).
+        int32_t router_keys[TORUS_DIM * TORUS_DIM];
+        int rk = 0;
+        for (int ti = 0; ti < TORUS_DIM; ti++) {
+            for (int tj = 0; tj < TORUS_DIM; tj++) {
+                float intensity = state.phi_re[ti][tj] * state.phi_re[ti][tj] +
+                                  state.phi_im[ti][tj] * state.phi_im[ti][tj];
+                router_keys[rk++] = (int32_t)(intensity * 1000.0f);
+            }
+        }
+        router_distribute_sort(&router, router_keys, (size_t)rk);
+
+        if (step == 0) {
+            // One-time sanity check: every bucket must come out ascending,
+            // and (since nodes are assigned by increasing key range) each
+            // node's values should not exceed the next node's.
+            bool router_ok = true;
+            for (int n = 0; n < ROUTER_NUM_NODES; n++) {
+                RouterBucket *b = &router.nodes[n];
+                for (size_t k = 1; k < b->size; k++) {
+                    if (b->data[k] < b->data[k - 1]) router_ok = false;
+                }
+            }
+            serial_print(router_ok ? "[ROUTER] self-check: OK\n"
+                                    : "[ROUTER] self-check: FAILED\n");
+        }
 
         // Render UI
         k_clear(BLACK);
@@ -184,13 +216,23 @@ void kernel_main(uint32_t magic, void* mbi) {
             }
         }
 
-        // 3. Core Indicators
+        // 3. Core Indicators + Node Router load (keys routed to this core this tick)
         for(int i=0; i<4; i++) {
             k_print_at(2, 13 + i, "CORE", LIGHT_GRAY, BLACK);
             k_putc(7, 13 + i, '0' + i, WHITE, BLACK);
             int sync_len = (int)(state.bus.core_sync[i] * 10);
             for(int s=0; s<10; s++) k_putc(10+s, 13+i, (s < sync_len) ? '>' : '-', (sync_len > 9) ? GREEN : DARK_GRAY, BLACK);
+
+            k_print_at(22, 13 + i, "RT:", DARK_GRAY, BLACK);
+            char rt_buf[8];
+            itoa((int)router.nodes[i].size, rt_buf);
+            k_print_at(26, 13 + i, rt_buf, (router.nodes[i].size > 0) ? CYAN : DARK_GRAY, BLACK);
         }
+
+        k_print_at(60, 13, "ROUTER DROP:", LIGHT_GRAY, BLACK);
+        char drop_buf[8];
+        itoa((int)router.dropped, drop_buf);
+        k_print_at(73, 13, drop_buf, (router.dropped > 0) ? RED : GREEN, BLACK);
 
         k_print_at(2, ROWS-2, "ENV: QEMU-I386 // BRIDGE: TORUS-SHEAR // CORE: MULTIPLEX", DARK_GRAY, BLACK);
 
@@ -204,6 +246,14 @@ void kernel_main(uint32_t magic, void* mbi) {
             serial_print("  BRTH: ");
             if (state.breathing_state > 0.5f) serial_print("ON ");
             else serial_print("OFF");
+            serial_print("  RT[");
+            for (int n = 0; n < ROUTER_NUM_NODES; n++) {
+                char n_buf[8];
+                itoa((int)router.nodes[n].size, n_buf);
+                serial_print(n_buf);
+                if (n < ROUTER_NUM_NODES - 1) serial_print(",");
+            }
+            serial_print("]");
 
             // Update LCD with Stability & RMS
             lcd_set_cursor(&lcd, 0, 1);
