@@ -19,7 +19,7 @@ LDFLAGS := -m elf_i386 -T linker.ld -nostdlib
 
 OBJ := build/boot.o build/isr.o build/con.o build/int.o build/h7.o build/rs.o \
        build/qsim.o build/qsv.o build/qasm.o build/steane.o build/qtext.o build/echo.o build/unital.o \
-       build/ghz.o build/shell.o build/kernel.o
+       build/ghz.o build/core.o build/shell.o build/kernel.o
 
 all: build/h7os.elf
 

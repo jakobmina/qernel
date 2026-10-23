@@ -127,6 +127,20 @@ void con_clear(void) {
     serial_write("\033[2J\033[H");
 }
 
+/* Para una pantalla que se redibuja muchas veces por segundo (el dashboard de
+ * "core"): solo VGA, nada de COM1 ni de mover el cursor de texto. con_clear
+ * de arriba sigue siendo la que se usa al volver al shell. */
+void con_clear_rows(uint8_t a) {
+    for (int r = TOP; r < ROWS; r++) vga_fill_row(r, a);
+}
+
+/* Escritura por coordenada, para pantallas de posición fija en vez de scroll.
+ * No toca row/col ni el cursor de hardware; fila 0 (la barra de estado)
+ * queda fuera de su alcance. */
+void con_putc_at(int x, int y, char c, uint8_t a) {
+    if (x >= 0 && x < COLS && y >= TOP && y < ROWS) VGA[y * COLS + x] = (uint16_t)(a << 8 | (uint8_t)c);
+}
+
 /* ------------------------------------------------------------------------ */
 /* Entrada: teclado y COM1 escriben en un mismo anillo desde sus IRQ        */
 /* ------------------------------------------------------------------------ */
@@ -145,6 +159,16 @@ void con_serial_irq(void) {
 int con_getc(void) {
     __asm__ volatile ("cli" ::: "memory");
     while (ihead == itail) __asm__ volatile ("sti; hlt; cli" ::: "memory");   /* sti+hlt: sin carrera */
+    char c = inbuf[itail++];
+    __asm__ volatile ("sti" ::: "memory");
+    return (uint8_t)c;
+}
+
+/* Igual que con_getc pero sin el hlt de espera: para un bucle que anima algo
+ * y solo de paso mira si llegó una tecla (p. ej. ESC para salir de "core"). */
+int con_poll(void) {
+    __asm__ volatile ("cli" ::: "memory");
+    if (ihead == itail) { __asm__ volatile ("sti" ::: "memory"); return -1; }
     char c = inbuf[itail++];
     __asm__ volatile ("sti" ::: "memory");
     return (uint8_t)c;

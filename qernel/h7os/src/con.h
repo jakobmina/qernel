@@ -17,6 +17,8 @@ void con_init(void);
 void con_attr(uint8_t attr);
 void con_status(const char *s);          /* reescribe la fila 0 (solo VGA) */
 void con_clear(void);                    /* limpia filas 1..24 y la terminal serial */
+void con_clear_rows(uint8_t attr);       /* limpia filas 1..24, solo VGA: sin eco por COM1 */
+void con_putc_at(int x, int y, char c, uint8_t attr);  /* escritura directa, sin tocar cursor/fila 0 */
 void con_dump_vga(void);                 /* copia la pantalla VGA al serial */
 void kprintf(const char *fmt, ...);      /* %d %u %x %X %s %c %f, ancho, '-', '0', precisión */
 void ksprintf(char *buf, int size, const char *fmt, ...);
@@ -25,6 +27,7 @@ void ksprintf(char *buf, int size, const char *fmt, ...);
 void con_input(char c);                  /* lo llaman las IRQ */
 void con_serial_irq(void);
 int  con_getc(void);                     /* bloquea con hlt hasta que llegue un carácter */
+int  con_poll(void);                     /* como con_getc pero no bloquea: -1 si no hay nada */
 void con_echo(char c);
 void con_backspace(void);
 

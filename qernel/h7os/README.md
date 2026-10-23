@@ -83,6 +83,7 @@ h7> phase 1000000000   nodo, posición, etiqueta y cos(πφn) exacto contra rota
 h7> q ghz              n mod 14 en la base GHZ: 14 lecturas con P = 1
 h7> q ghz 15           un n: estado, lectura, bit r ≥ 4 y n mod 14
 h7> q ghz qasm 15 enc  el circuito; con enc, solo la codificación
+h7> core                dashboard del motor metripléctico (qernel/baremetal); ESC vuelve al shell
 h7> del 36 · ref · clear · help · exit · halt
 ```
 
@@ -93,6 +94,23 @@ h7> del 36 · ref · clear · help · exit · halt
 - `exit` cierra QEMU con código según el almacén: sano → 1, roto → 3.
 - Línea de comandos del kernel: `-append "run=put 36;flip 36 100;ls"` ejecuta
   comandos al arrancar; `vgadump` copia la pantalla al serial al salir.
+
+## `core`: el motor metripléctico de QUOREMIND
+
+`qernel/baremetal` (otro kernel i386 del mismo repo, con su propio arranque
+Multiboot y Makefile) corre un motor físico separado: campo toroidal Φ sobre
+T² modulado por el operador áureo, un lazo de control PWM (`GoldenLaunder`)
+que persigue RMS → φ, diagnóstico de estabilidad de Barbashin-LaSalle, y un
+`NodeRouter` de un solo hilo que clasifica y ordena por rango de clave las
+64 intensidades del campo entre 4 nodos virtuales.
+
+`core` lo trae a H7-OS como una pantalla más del shell en vez de un kernel
+aparte: mismas ecuaciones, pero en `double` con `q_sincos`/`q_sqrt` de
+`qsv.c` (no una serie de Taylor propia), dibujadas con `con_putc_at` sobre
+las filas 1..24 (la 0 sigue siendo la barra de estado de H7-OS). `ESC`
+devuelve al prompt sin perder el estado del motor: `core` dos veces seguidas
+continúa donde se quedó. `qernel/baremetal` sigue existiendo tal cual, sin
+tocar — este es un puerto, no una migración.
 
 ## Piezas
 
@@ -112,6 +130,7 @@ h7> del 36 · ref · clear · help · exit · halt
 | `src/echo.c` | experimento del eco: genera cada realización en QASM, la corre y clasifica |
 | `src/unital.c` | prueba de unitalidad: qubit + referencia de Bell, seis modelos de canal |
 | `src/ghz.c` | v0.7: n mod 14 codificado en la base GHZ de 3 qubits y leído sin azar |
+| `src/core.c` | comando `core`: motor metripléctico + NodeRouter, portados de `qernel/baremetal` |
 | `src/qtext.c` | texto y azar comunes a los experimentos (mismos bytes en kernel y Linux) |
 | `src/kernel.c` | secuencia de arranque |
 | `tools/steane_gen.c` | el mismo generador, compilado para Linux |

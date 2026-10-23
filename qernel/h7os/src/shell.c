@@ -15,6 +15,7 @@
 #include "echo.h"
 #include "unital.h"
 #include "ghz.h"
+#include "core.h"
 
 #define LINE_MAX 72                          /* "h7> " + 72 caracteres < 80 columnas */
 #define KEY_UP   0x10                        /* flecha arriba (teclado o ESC [ A) */
@@ -248,6 +249,7 @@ static void cmd_help(void) {
     kprintf("  ref          bloque de referencia de h7_hexa_dec.c\n");
     kprintf("  phase n      nodo, posición, etiqueta y fase áurea exacta vs rotate_pow\n");
     kprintf("  q            código de Steane en OpenQASM: q run, q qasm, q sweep (q help)\n");
+    kprintf("  core         dashboard del motor metripléctico (qernel/baremetal) · ESC para volver\n");
     kprintf("  clear · exit · halt\n");
     kprintf("flecha arriba repite la última línea\n");
 }
@@ -658,6 +660,7 @@ void shell_exec(char *line) {
     }
     else if (streq(c, "ref"))    cmd_ref();
     else if (streq(c, "phase"))  { if (a_ok && argc == 2) cmd_phase(a); else kprintf("uso: phase n · ej. phase 1000000000\n"); }
+    else if (streq(c, "core"))   cmd_core();
     else if (streq(c, "clear"))  con_clear();
     else if (streq(c, "exit"))   cmd_exit();
     else if (streq(c, "halt"))   { kprintf("sistema detenido\n"); for (;;) __asm__ volatile ("cli; hlt"); }
